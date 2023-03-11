@@ -1,0 +1,99 @@
+IMPORT cv2
+
+IMPORT numpy as np
+
+IMPORT os
+
+IMPORT pandas as pd
+
+IMPORT time
+
+start_time=time.time()
+
+test_original=[]
+
+SET test_original TO cv2.imread("right_eye.bmp")
+
+cv2.imshow("Original", cv2.resize(test_original, None, fx=1, fy=1))
+
+cv2.waitKey(0)
+
+cv2.destroyAllWindows()
+
+count=0
+
+x=False
+
+FOR file IN [file FOR file IN os.listdir("final")]:
+
+    SET iris_database_image TO cv2.imread("./final/" + file)
+
+
+
+    SET sift TO cv2.xfeatures2d.SIFT_create()
+
+
+
+    SET keypoints_1, descriptors_1 TO sift.detectAndCompute(test_original, None)
+
+    SET keypoints_2, descriptors_2 TO sift.detectAndCompute(iris_database_image, None)
+
+
+
+    SET matches TO cv2.FlannBasedMatcher(dict(algorithm=1, trees=10),
+
+                                    dict()).knnMatch(descriptors_1, descriptors_2, k=2)
+
+    SET match_points TO []
+
+    FOR p, q IN matches:
+
+        IF p.distance < 0.1 * q.distance:
+
+            match_points.append(p)
+
+        SET keypoints TO 0
+
+        IF len(keypoints_1) <= len(keypoints_2):
+
+            SET keypoints TO len(keypoints_1)
+
+        ELSE:
+
+            SET keypoints TO len(keypoints_2)
+
+        IF (len(match_points) / keypoints) > 0.95:
+
+            OUTPUT("The INPUT Iris image is matched!!")
+
+            OUTPUT("percentage(%) of match: ", len(match_points) / keypoints * 100)
+
+            b=time.time()-start_time
+
+            OUTPUT("the total time taken is :{} Seconds".format(b))
+
+            SET result TO cv2.drawMatches(test_original, keypoints_1, iris_database_image,
+
+                                    keypoints_2, match_points, None)
+
+            SET result TO cv2.resize(result, None, fx=1, fy=1)
+
+            cv2.imshow("result", result)
+
+            cv2.waitKey(10000)
+
+            cv2.destroyAllWindows()
+
+            x=True
+
+            count+=1
+
+            break
+
+    IF x:
+
+        break
+
+ELSE:
+
+    OUTPUT("The INPUT Iris image is not matched!!")
